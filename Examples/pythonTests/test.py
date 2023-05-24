@@ -1,103 +1,27 @@
-from flask import Flask, flash, request, send_file
-from werkzeug.utils import secure_filename
-import pyodbc
-from cassandra.cluster import Cluster
-from cassandra.auth import PlainTextAuthProvider
-from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_NONE
-from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
-import io
-from flask_cors import CORS
-import random
-import string
+def obtener_lineas_letra(letra, frase):
+    lineas = letra.split('\n')
+    lineas_coincidentes = []
+    primera_coincidencia = False
 
-# ===========================================================================
-# Cassandra Connection
+    for linea in lineas:
+        for palabra in frase.split():
+            if palabra.lower() in linea.lower():
+                lineas_coincidentes.append(linea)
+                primera_coincidencia = True
+                break
 
-# Defines the connection string for Cosmos DB and Cassandra
-contact_points = ['tfex-cosmos-db-26555.cassandra.cosmos.azure.com']
-port = 10350
-usernameVar = 'tfex-cosmos-db-26555'
-passwordVar = 'wd5uWOiL7UGaYv9W4oyh9VQOEr0FN8JphA71qwM6rnchowByWmv5ldDSfTndVgv9IgsvKEebInagACDbQB5BSw=='
-keyspace = 'tfex-cosmos-cassandra-keyspace'
+        if primera_coincidencia:
+            lineas_coincidentes.append(linea)
+            if len(lineas_coincidentes) == 4:
+                break
 
-auth_provider = PlainTextAuthProvider(username=usernameVar, password=passwordVar)
-ssl_context = SSLContext(PROTOCOL_TLSv1_2)
-ssl_context.verify_mode = CERT_NONE
+    return lineas_coincidentes[:4]
 
-# Creates a Cluster object and a Cassandra session
-cluster = Cluster(
-    contact_points=contact_points, 
-    port=port, 
-    auth_provider=auth_provider,
-    ssl_context=ssl_context
-)
-session = cluster.connect(keyspace)
+# Ejemplo de uso
+letra_cancion = "Parte1\nDaddy's flown across the ocean\nLeaving just a memory\nSnapshot in the family album\nDaddy what else did you leave for me?\nDaddy, what'd'ja leave behind for me?!?\nAll in all it was just a brick in the wall.\nAll in all it was all just bricks in the wall.\n\n\"You! Yes, you behind the bikesheds, stand still lady!\"\n\nWhen we grew up and went to school\nThere were certain teachers who would\nHurt the children in any way they could\n(oof!)\nBy pouring their derision\nUpon anything we did\nAnd exposing every weakness\nHowever carefully hidden by the kids\nBut in the town it was well known\nWhen they got home at night, their fat and\nPsychopathic wives would thrash them\nWithin inches of their lives.\n\nParte 2\n\nWe don't need no education\nWe dont need no thought control\nNo dark sarcasm in the classroom\nTeachers leave them kids alone\nHey! Teachers! Leave them kids alone!\nAll in all it's just another brick in the wall.\nAll in all you're just another brick in the wall.\n\nWe don't need no education\nWe don't need no thought control\nNo dark sarcasm in the classroom\nTeachers leave us kids alone\nHey! Teachers! Leave us kids alone!\nAll in all it's just another brick in the wall.\nAll in all you're just another brick in the wall.\n\n\"Wrong, Guess again! 2x\nIf you don't eat yer meat, you can't have any pudding.\nHow can you have any pudding if you don't eat yer meat?\nYou! Yes, you behind the bikesheds, stand still laddie!\"\n\nParte 3\n\nI don't need no arms around me\nAnd I don't need no drugs to calm me\nI have seen the writing on the wall\nDon't think I need anything at all\n\nNo! Don't think I'll need anything at all\nAll in all it was all just bricks in the wall.\nAll in all you were all just bricks in the wall."
 
-class CassandraConnector():
-    def submit(self, user, log):
-        session.execute("INSERT INTO userlogs (user_id, logline) VALUES ('"+user+"', '"+log+"')")
-        return "Submited"
+frase_busqueda = 'Leave us kids alone'
 
-    def deleteAll(self):
-        session.execute("TRUNCATE userlogs")
-        return "Deleted all"
-
-    def uploadFile(self, user):
-        self.submit(user, "Uploaded File.")
-
-    def downloadFile(self, user):
-        self.submit(user, "Downloaded File.")
-
-    def modifyFile(self, user):
-        self.submit(user, "Modified File.")
-
-    def deleteFile(self, user):
-        self.submit(user, "Deleted File.")
-
-    def userInfoRequested(self, user):
-        self.submit(user, "Requested his/her information.")
-
-    def userInfoUpdated(self, user):
-        self.submit(user, "Updated his/her information.")
-
-    def userDeleted(self, user):
-        self.submit(user, "Deleted his/her account.")
-
-    def signUp(self, user):
-        self.submit(user, "Signed up.")
-
-    def userLogin(self, user):
-        self.submit(user, "Logged in.")
-
-    def userLogout(self, user):
-        self.submit(user, "Logged out.")
-
-    def enrollCourse(self, user):
-        self.submit(user, "Enrolled a Course.")
-
-    def unenrollCourse(self, user):
-        self.submit(user, "Unenrolled a Course.")
-
-    def availableCourses(self, user):
-        self.submit(user, "Viewed available courses.")
-
-    def viewEnrollmentDates(self, user):
-        self.submit(user, "Viewed enrollment date.")
-
-    def resetPassword(self, user):
-        self.submit(user, "Reset the Password.")
-
-    def viewGradeAverage(self, user):
-        self.submit(user, "Viewed grade average.")
-
-    def getEnrollmentReport(self, user):
-        self.submit(user, "Viewed enrollment report.")
-
-    def viewEnrolledCourses(self, user):
-        self.submit(user, "Viewed enrolled courses.")
-
-
-logManager = CassandraConnector()
-
-logManager.userLogin("fFri4sRcE0P6oKHtdZ7INR2jwwl2")
+resultado = obtener_lineas_letra(letra_cancion, frase_busqueda)
+for linea in resultado:
+    print(linea)
